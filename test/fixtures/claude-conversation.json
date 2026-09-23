@@ -1,0 +1,82 @@
+{
+  "uuid": "7c1e2d3a-0000-4000-8000-000000000001",
+  "name": "Rate limiter design",
+  "model": "claude-sonnet-5",
+  "created_at": "2026-09-20T10:00:00.000000Z",
+  "updated_at": "2026-09-20T10:05:00.000000Z",
+  "current_leaf_message_uuid": "m-6",
+  "chat_messages": [
+    {
+      "uuid": "m-1",
+      "sender": "human",
+      "parent_message_uuid": "00000000-0000-4000-8000-000000000000",
+      "created_at": "2026-09-20T10:00:00.000000Z",
+      "text": "",
+      "content": [{ "type": "text", "text": "How should I rate limit an API per user?" }]
+    },
+    {
+      "uuid": "m-2",
+      "sender": "assistant",
+      "parent_message_uuid": "m-1",
+      "created_at": "2026-09-20T10:00:05.000000Z",
+      "text": "",
+      "content": [
+        { "type": "thinking", "thinking": "The user wants per-user limits; token bucket fits." },
+        { "type": "text", "text": "Use a token bucket keyed by user id." }
+      ]
+    },
+    {
+      "uuid": "m-3-old",
+      "sender": "human",
+      "parent_message_uuid": "m-2",
+      "created_at": "2026-09-20T10:01:00.000000Z",
+      "text": "",
+      "content": [{ "type": "text", "text": "What about Redis? (abandoned edit)" }]
+    },
+    {
+      "uuid": "m-4-old",
+      "sender": "assistant",
+      "parent_message_uuid": "m-3-old",
+      "created_at": "2026-09-20T10:01:05.000000Z",
+      "text": "",
+      "content": [{ "type": "text", "text": "This branch was replaced by an edit." }]
+    },
+    {
+      "uuid": "m-3",
+      "sender": "human",
+      "parent_message_uuid": "m-2",
+      "created_at": "2026-09-20T10:02:00.000000Z",
+      "text": "",
+      "content": [{ "type": "text", "text": "Show it with Redis and Lua." }]
+    },
+    {
+      "uuid": "m-4",
+      "sender": "assistant",
+      "parent_message_uuid": "m-3",
+      "created_at": "2026-09-20T10:02:10.000000Z",
+      "text": "",
+      "content": [
+        { "type": "text", "text": "Let me check the Redis docs." },
+        { "type": "tool_use", "name": "web_search", "input": { "query": "redis lua token bucket" } },
+        { "type": "tool_result", "name": "web_search", "content": [{ "type": "text", "text": "search results" }] },
+        { "type": "text", "text": "Here is an atomic Lua script for the bucket." }
+      ]
+    },
+    {
+      "uuid": "m-5",
+      "sender": "human",
+      "parent_message_uuid": "m-4",
+      "created_at": "2026-09-20T10:04:00.000000Z",
+      "text": "",
+      "content": [{ "type": "text", "text": "Thanks!" }]
+    },
+    {
+      "uuid": "m-6",
+      "sender": "assistant",
+      "parent_message_uuid": "m-5",
+      "created_at": "2026-09-20T10:04:02.000000Z",
+      "text": "",
+      "content": [{ "type": "thinking", "thinking": "Nothing to add." }]
+    }
+  ]
+}

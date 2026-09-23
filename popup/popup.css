@@ -1,0 +1,117 @@
+/* MARK: Tokens */
+:root {
+  --bg: #ffffff;
+  --fg: #1d1d1f;
+  --muted: #6e6e73;
+  --border: #d2d2d7;
+  --accent: #10a37f;
+  --code-bg: #f5f5f7;
+  --error: #c62828;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1e;
+    --fg: #f5f5f7;
+    --muted: #98989d;
+    --border: #3a3a3c;
+    --code-bg: #2c2c2e;
+    --error: #ef5350;
+  }
+}
+
+/* MARK: Layout */
+body {
+  width: 360px;
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 13px/1.4 system-ui, -apple-system, sans-serif;
+}
+header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+h1 { font-size: 15px; margin: 0; flex: 1; }
+.badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--code-bg); color: var(--muted); }
+.badge:empty { display: none; }
+.icon { width: 26px; height: 26px; padding: 0; font-size: 14px; line-height: 1; }
+
+/* MARK: Pages
+   All pages share one grid cell; each later page in the stack slides in from the right over
+   the one below. The viewport's height tracks the active page (set from JS) so the popup
+   resizes to it, and the negative margin lets pages clip at the popup edge, not the padding. */
+:root { --slide: 200ms ease-in-out; }
+#viewport {
+  display: grid;
+  /* clip, not hidden: a hidden box can still be scrolled (e.g. by focus during a slide),
+     which left the incoming page shifted sideways. */
+  overflow: clip;
+  margin: 0 -16px;
+  /* Height is never transitioned: the popup window resizes with it, and resizing it every
+     frame crashed Brave on macOS (NSRemoteView window-move during animation fencing). */
+}
+.page {
+  grid-area: 1 / 1;
+  align-self: start;
+  min-width: 0;
+  padding: 0 16px 2px;
+  background: var(--bg);
+  transform: translateX(100%);
+  transition: transform var(--slide);
+}
+.page.in-stack { transform: translateX(0); }
+@media (prefers-reduced-motion: reduce) {
+  .page { transition: none; }
+}
+
+/* MARK: Form */
+.field { margin-top: 0.5rem; margin-bottom: 0.5rem; }
+.field-label { display: flex; align-items: center; gap: 4px; color: var(--muted); }
+/* Drawn with CSS rather than the ⓘ glyph, whose font metrics sit it off the text's centre line. */
+.info {
+  display: inline-grid;
+  place-items: center;
+  width: 10px;
+  height: 10px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font: italic 600 7.5px/1 Georgia, serif;
+  cursor: help;
+}
+.info:focus-visible { outline: 1px solid var(--accent); border-radius: 50%; }
+#backends label { display: flex; gap: 8px; align-items: center; padding: 3px 0; }
+#backend-options label { display: block; color: var(--muted); margin-bottom: 10px; }
+.note { color: var(--muted); font-size: 11px; margin: 0; }
+input[type="text"] {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 3px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 12px ui-monospace, monospace;
+}
+button { cursor: pointer; border-radius: 6px; border: 1px solid var(--border); background: var(--code-bg); color: var(--fg); }
+.primary { width: 100%; padding: 8px; border: 0; background: var(--accent); color: #fff; font-weight: 600; }
+.primary:disabled { opacity: 0.5; cursor: default; }
+#go { margin-top: 0.75rem; }
+.back { margin: 14px 0 8px; }
+
+/* MARK: Output */
+#status { min-height: 1em; margin: 10px 0 0; color: var(--muted); }
+#status.error { color: var(--error); }
+#result-summary { margin: 0 0 4px; }
+.cmd-head { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; color: var(--muted); }
+.cmd-step { margin: 14px 0 0; color: var(--fg); font-weight: 600; }
+#result-page > .cmd-head:first-of-type span { color: var(--fg); font-weight: 600; }
+.cmd-label { font-weight: 500; }
+pre {
+  margin: 6px 0 0;
+  padding: 8px;
+  background: var(--code-bg);
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

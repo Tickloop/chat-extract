@@ -1,0 +1,14 @@
+# Build output: attach the zip to a GitHub Release instead of committing it
+dist/
+
+# Dependencies and tooling
+node_modules/
+.playwright-cli/
+*.log
+
+# OS / editor clutter
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+

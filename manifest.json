@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "chat-extract",
+  "version": "0.1.0",
+  "description": "Export a ChatGPT or Claude conversation as resumable Claude Code / Codex CLI sessions.",
+  "minimum_chrome_version": "105",
+  "homepage_url": "https://github.com/tickloop/chat-extract",
+  "permissions": ["activeTab", "scripting", "downloads", "storage"],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "chat-extract",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  }
+}

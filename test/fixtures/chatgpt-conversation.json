@@ -1,0 +1,160 @@
+{
+  "title": "Tar Directory Stream Pipe",
+  "conversation_id": "6aaf0000-0000-8000-8000-000000000001",
+  "create_time": 1789865683.0,
+  "update_time": 1789866196.0,
+  "default_model_slug": "gpt-5-6-thinking",
+  "current_node": "a2",
+  "mapping": {
+    "root": { "id": "root", "message": null, "parent": null, "children": ["sys"] },
+    "sys": {
+      "id": "sys",
+      "parent": "root",
+      "children": ["u1"],
+      "message": {
+        "id": "sys",
+        "author": { "role": "system" },
+        "recipient": "all",
+        "create_time": null,
+        "content": { "content_type": "text", "parts": [""] },
+        "metadata": { "is_visually_hidden_from_conversation": true }
+      }
+    },
+    "u1": {
+      "id": "u1",
+      "parent": "sys",
+      "children": ["a1-search"],
+      "message": {
+        "id": "u1",
+        "author": { "role": "user" },
+        "recipient": "all",
+        "create_time": 1789865683.0,
+        "content": { "content_type": "text", "parts": ["how to tar a dir and output it to a stream pipe"] },
+        "metadata": {}
+      }
+    },
+    "a1-search": {
+      "id": "a1-search",
+      "parent": "u1",
+      "children": ["tool1"],
+      "message": {
+        "id": "a1-search",
+        "author": { "role": "assistant" },
+        "recipient": "web.run",
+        "create_time": 1789865684.0,
+        "content": { "content_type": "text", "parts": ["{\"query\": \"tar stdout\"}"] },
+        "metadata": {}
+      }
+    },
+    "tool1": {
+      "id": "tool1",
+      "parent": "a1-search",
+      "children": ["a1-thoughts"],
+      "message": {
+        "id": "tool1",
+        "author": { "role": "tool" },
+        "recipient": "all",
+        "create_time": 1789865685.0,
+        "content": { "content_type": "text", "parts": ["search results"] },
+        "metadata": {}
+      }
+    },
+    "a1-thoughts": {
+      "id": "a1-thoughts",
+      "parent": "tool1",
+      "children": ["a1"],
+      "message": {
+        "id": "a1-thoughts",
+        "author": { "role": "assistant" },
+        "recipient": "all",
+        "create_time": 1789865686.0,
+        "content": { "content_type": "thoughts", "thoughts": [{ "summary": "tar -f -", "content": "..." }] },
+        "metadata": {}
+      }
+    },
+    "a1": {
+      "id": "a1",
+      "parent": "a1-thoughts",
+      "children": ["u2-old", "u2"],
+      "message": {
+        "id": "a1",
+        "author": { "role": "assistant" },
+        "recipient": "all",
+        "create_time": 1789865690.0,
+        "content": { "content_type": "text", "parts": ["Use `tar -cf - ./dir | ...` to write the archive to stdout."] },
+        "metadata": { "model_slug": "gpt-5-6-thinking" }
+      }
+    },
+    "u2-old": {
+      "id": "u2-old",
+      "parent": "a1",
+      "children": [],
+      "message": {
+        "id": "u2-old",
+        "author": { "role": "user" },
+        "recipient": "all",
+        "create_time": 1789865700.0,
+        "content": { "content_type": "text", "parts": ["this edit was abandoned"] },
+        "metadata": {}
+      }
+    },
+    "u2": {
+      "id": "u2",
+      "parent": "a1",
+      "children": ["a2-hidden"],
+      "message": {
+        "id": "u2",
+        "author": { "role": "user" },
+        "recipient": "all",
+        "create_time": 1789865800.0,
+        "content": {
+          "content_type": "multimodal_text",
+          "parts": [{ "content_type": "audio_transcription", "text": " And compare two dirs by sha256?" }]
+        },
+        "metadata": {}
+      }
+    },
+    "a2-hidden": {
+      "id": "a2-hidden",
+      "parent": "u2",
+      "children": ["a2-empty"],
+      "message": {
+        "id": "a2-hidden",
+        "author": { "role": "assistant" },
+        "recipient": "all",
+        "create_time": 1789865801.0,
+        "content": { "content_type": "model_editable_context", "parts": [] },
+        "metadata": { "is_visually_hidden_from_conversation": true }
+      }
+    },
+    "a2-empty": {
+      "id": "a2-empty",
+      "parent": "a2-hidden",
+      "children": ["a2"],
+      "message": {
+        "id": "a2-empty",
+        "author": { "role": "assistant" },
+        "recipient": "all",
+        "create_time": 1789865802.0,
+        "content": { "content_type": "text", "parts": ["   "] },
+        "metadata": {}
+      }
+    },
+    "a2": {
+      "id": "a2",
+      "parent": "a2-empty",
+      "children": [],
+      "message": {
+        "id": "a2",
+        "author": { "role": "assistant" },
+        "recipient": "all",
+        "create_time": 1789865810.0,
+        "content": {
+          "content_type": "multimodal_text",
+          "parts": [{ "content_type": "audio_transcription", "text": " Hash a canonical tar stream of each dir." }]
+        },
+        "metadata": { "model_slug": "bidi" }
+      }
+    }
+  }
+}

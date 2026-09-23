@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>chat-extract</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>chat-extract</h1>
+      <span id="source" class="badge"></span>
+      <button type="button" id="toggle-settings" class="icon" title="Settings" aria-label="Settings">⚙</button>
+    </header>
+
+    <div id="viewport">
+      <!-- MARK: Export page -->
+      <main class="page" id="export-page">
+        <section id="unsupported" hidden>
+          <p id="unsupported-text"></p>
+        </section>
+
+        <form id="export" hidden>
+          <div class="field">
+            <span class="field-label">Export to</span>
+            <div id="backends"></div>
+          </div>
+
+          <div class="field" id="project-path-field">
+            <label class="field-label" for="projectPath">
+              Project path
+              <span
+                class="info"
+                tabindex="0"
+                title="The project folder where you want to resume this conversation. Coding CLIs scope conversations to directories, so pick the directory you want this conversation to be resumable from."
+                >i</span
+              >
+            </label>
+            <input id="projectPath" type="text" placeholder="/Users/you/repo/project" spellcheck="false" />
+          </div>
+
+          <button type="submit" id="go" class="primary">Export</button>
+        </form>
+
+        <p id="status" role="status"></p>
+      </main>
+
+      <!-- MARK: Result page -->
+      <main class="page" id="result-page" inert>
+        <p id="result-summary"></p>
+
+        <div class="cmd-head">
+          <span>1. Run in a terminal to install</span>
+          <button type="button" data-copy="install-cmd">Copy</button>
+        </div>
+        <pre id="install-cmd"></pre>
+
+        <p class="cmd-step">2. Then resume with</p>
+        <div id="resume-cmds"></div>
+
+        <button type="button" class="primary back" data-back>← Back</button>
+      </main>
+
+      <!-- MARK: Settings page -->
+      <main class="page" id="settings-page" inert>
+        <form id="settings">
+          <div id="backend-options"></div>
+          <p class="note">Saved automatically. Used for every export.</p>
+        </form>
+      </main>
+    </div>
+
+    <template id="resume-tpl">
+      <div class="cmd-head">
+        <span class="cmd-label"></span>
+        <button type="button" data-copy>Copy</button>
+      </div>
+      <pre></pre>
+    </template>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
