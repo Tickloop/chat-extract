@@ -1,6 +1,6 @@
 # chat-extract Privacy Policy
 
-_Last updated: 2026-09-22_
+_Last updated: 2026-10-14_
 
 chat-extract is a browser extension that exports the ChatGPT or Claude conversation you have open into session files for the Claude Code and Codex command-line tools. This policy explains what the extension touches and where that data goes.
 
@@ -24,7 +24,7 @@ The extension remembers a few preferences in the browser's local extension stora
 - which export formats are ticked (Claude Code, Codex CLI)
 - the project path you last entered
 - your default model names for Claude Code and Codex
-
+- the install and resume commands from your last export, and that conversation's title, so they are still there if the popup closes. The next export replaces them, and changing the project path deletes them.
 These stay on your device. Removing the extension deletes them.
 
 ## Permissions

@@ -90,11 +90,11 @@ function syncVisibility() {
 
 // MARK: Result page
 
-function renderResult(ir, files, projectPath) {
-  $("result-summary").textContent = `Exported “${ir.header.title}” — ${ir.messages.length} messages.`;
-  $("install-cmd").textContent = installCommand(files);
+function renderResult({ title, messageCount, install, resume }) {
+  $("result-summary").textContent = `Exported “${title}” — ${messageCount} messages.`;
+  $("install-cmd").textContent = install;
   $("resume-cmds").replaceChildren(
-    ...resumeCommands(files, projectPath).map(({ label, command }, i) => {
+    ...resume.map(({ label, command }, i) => {
       const block = $("resume-tpl").content.cloneNode(true);
       const pre = block.querySelector("pre");
       pre.id = `resume-cmd-${i}`;
@@ -104,6 +104,20 @@ function renderResult(ir, files, projectPath) {
       return block;
     }),
   );
+}
+
+// MARK: Last export
+// Chrome closes the popup whenever it loses focus, usually the moment the user switches to a
+// terminal to paste the install command. So the commands are kept until they stop applying:
+// a new export replaces them, and editing the project path drops them.
+
+const LAST_EXPORT = "lastExport";
+
+async function restoreLastExport() {
+  const { [LAST_EXPORT]: last } = await chrome.storage.local.get(LAST_EXPORT);
+  if (!last) return;
+  renderResult(last);
+  pages.push("result-page", { animate: false });
 }
 
 // MARK: Export
@@ -132,8 +146,15 @@ async function onExport(tab, frontend) {
     const ir = frontend.toIR(await scrapeTab(tab, frontend), tab.url);
     const rendered = renderAll(ir, ids, opts);
     const files = await Promise.all(rendered.map(async (f) => ({ ...f, savedPath: await download(f) })));
+    const result = {
+      title: ir.header.title,
+      messageCount: ir.messages.length,
+      install: installCommand(files),
+      resume: resumeCommands(files, opts.projectPath),
+    };
+    save({ [LAST_EXPORT]: result });
     setStatus("");
-    renderResult(ir, files, opts.projectPath);
+    renderResult(result);
     pages.push("result-page");
   } catch (err) {
     setStatus(err.message ?? String(err), true);
@@ -165,6 +186,7 @@ async function init() {
   pages = createPageStack($("viewport"), "export-page", { onChange: syncSettingsButton });
   $("toggle-settings").addEventListener("click", toggleSettings);
   wireButtons();
+  await restoreLastExport();
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const frontend = pickFrontend(tab?.url);
@@ -181,7 +203,7 @@ async function init() {
   syncVisibility();
 
   $("export").addEventListener("change", () => (syncVisibility(), save({ selected: selectedIds() })));
-  $("projectPath").addEventListener("input", () => save({ projectPath: $("projectPath").value }));
+  $("projectPath").addEventListener("input", () => (save({ projectPath: $("projectPath").value }), chrome.storage.local.remove(LAST_EXPORT)));
   $("export").addEventListener("submit", (e) => (e.preventDefault(), onExport(tab, frontend)));
 }
 

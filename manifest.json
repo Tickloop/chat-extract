@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "chat-extract",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Export a ChatGPT or Claude conversation as resumable Claude Code / Codex CLI sessions.",
   "minimum_chrome_version": "105",
   "homepage_url": "https://github.com/tickloop/chat-extract",

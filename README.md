@@ -19,6 +19,8 @@ chat-extract is a Chrome extension that exports the ChatGPT or Claude conversati
    - **one install command** that moves them into `~/.claude` / `~/.codex`, which you paste into a terminal
    - **a resume command per CLI**, e.g. `cd '/Users/you/code/app' && claude --resume <id>`
 
+   The popup closes when you click away, so it reopens on these commands until you export again or change the project path.
+
 The ⚙ page sets the model each CLI resumes with (defaults: `claude-opus-5-5` and `gpt-6-astra`).
 
 **What's exported:** every visible message on the branch you're viewing, including ChatGPT voice-mode transcripts. Abandoned edit branches, hidden system messages, tool calls and model "thinking" are left out.
@@ -67,6 +69,7 @@ Reload the unpacked extension at `chrome://extensions` after changes.
 ## Release
 
 ```bash
+npm run bump       # patch bump in manifest.json + package.json; or: npm run bump minor | major | 1.2.3
 npm run package    # tests + dist/chat-extract-<version>.zip (allowlisted files only)
 ```
 

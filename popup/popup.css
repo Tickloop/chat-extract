@@ -59,6 +59,7 @@ h1 { font-size: 15px; margin: 0; flex: 1; }
   transition: transform var(--slide);
 }
 .page.in-stack { transform: translateX(0); }
+#viewport.instant .page { transition: none; }
 @media (prefers-reduced-motion: reduce) {
   .page { transition: none; }
 }

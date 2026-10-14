@@ -30,6 +30,8 @@ export function createPageStack(viewport, rootId, { onChange = () => {} } = {}) 
   }
 
   function sync({ animate = true } = {}) {
+    // Set in the same task as the stack change, so that change is the one that skips the slide.
+    viewport.classList.toggle("instant", !animate);
     for (const page of pages) {
       const i = stack.indexOf(page.id);
       page.classList.toggle("in-stack", i !== -1);
@@ -47,12 +49,12 @@ export function createPageStack(viewport, rootId, { onChange = () => {} } = {}) 
 
   return {
     top,
-    push(id) {
+    push(id, { animate = true } = {}) {
       if (top() === id) return;
       const existing = stack.indexOf(id);
       if (existing !== -1) stack.splice(existing, 1);
       stack.push(id);
-      sync();
+      sync({ animate });
     },
     pop() {
       if (stack.length > 1) stack.pop();
