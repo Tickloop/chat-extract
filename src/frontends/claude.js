@@ -1,24 +1,53 @@
 import { conversation, message, textPart } from "../ir.js";
 
 // MARK: Page scrape
-// Serialized by chrome.scripting into the page's MAIN world, so it must not close over
-// anything from this module. Uses claude.ai's own conversation API rather than the DOM,
-// which only holds the rendered window of a long chat.
-async function scrape() {
-  const id = location.pathname.match(/\/chat\/([0-9a-f-]{36})/)?.[1];
-  if (!id) throw new Error("Open a Claude conversation (claude.ai/chat/…) first.");
-  // Accounts can belong to several orgs; the cookie is the one this page is showing.
-  let org = document.cookie.match(/(?:^|;\s*)lastActiveOrg=([^;]+)/)?.[1];
-  if (!org) {
-    const res = await fetch("/api/organizations");
-    if (!res.ok) throw new Error("Not logged in to Claude.");
-    org = (await res.json())[0]?.uuid;
+// scrape and list are serialized by chrome.scripting into the page's MAIN world, so they must not
+// close over anything from this module, or each other. Failures come back as {pageError}, since
+// some browsers drop an error thrown here (see tab.js). Uses claude.ai's own conversation API
+// rather than the DOM, which only holds the rendered window of a long chat.
+async function scrape(id = location.pathname.match(/\/chat\/([0-9a-f-]{36})/)?.[1]) {
+  try {
+    if (!id) throw new Error("Open a Claude conversation (claude.ai/chat/…) first.");
+    // Accounts can belong to several orgs; the cookie is the one this page is showing.
+    let org = document.cookie.match(/(?:^|;\s*)lastActiveOrg=([^;]+)/)?.[1];
+    if (!org) {
+      const res = await fetch("/api/organizations");
+      if (!res.ok) throw new Error("Not logged in to Claude.");
+      org = (await res.json())[0]?.uuid;
+    }
+    const res = await fetch(
+      `/api/organizations/${org}/chat_conversations/${id}?tree=True&rendering_mode=messages&render_all_tools=true`,
+    );
+    if (!res.ok) throw new Error(`Claude API returned ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    return { pageError: err.message ?? String(err) };
   }
-  const res = await fetch(
-    `/api/organizations/${org}/chat_conversations/${id}?tree=True&rendering_mode=messages&render_all_tools=true`,
-  );
-  if (!res.ok) throw new Error(`Claude API returned ${res.status}`);
-  return res.json();
+}
+
+/** Pages by the count actually returned, since the server may cap `limit`; stops when a page adds nothing new. */
+async function list() {
+  try {
+    let org = document.cookie.match(/(?:^|;\s*)lastActiveOrg=([^;]+)/)?.[1];
+    if (!org) {
+      const res = await fetch("/api/organizations");
+      if (!res.ok) throw new Error("Not logged in to Claude.");
+      org = (await res.json())[0]?.uuid;
+    }
+    const found = new Map();
+    for (let offset = 0; ; ) {
+      const res = await fetch(`/api/organizations/${org}/chat_conversations?limit=100&offset=${offset}`);
+      if (!res.ok) throw new Error(`Claude API returned ${res.status}`);
+      const items = await res.json();
+      const before = found.size;
+      for (const c of items) found.set(c.uuid, { id: c.uuid, title: c.name || "Untitled", url: `${location.origin}/chat/${c.uuid}` });
+      offset += items.length;
+      if (found.size === before) break;
+    }
+    return [...found.values()];
+  } catch (err) {
+    return { pageError: err.message ?? String(err) };
+  }
 }
 
 // MARK: Canonicalize
@@ -77,4 +106,6 @@ export default {
   matches: (url) => /^https:\/\/claude\.ai\/chat\/[0-9a-f-]{36}/.test(url),
   scrape,
   toIR,
+  onSite: (url) => /^https:\/\/claude\.ai\//.test(url),
+  list,
 };

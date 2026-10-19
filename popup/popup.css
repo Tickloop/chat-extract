@@ -95,8 +95,12 @@ input[type="text"] {
 }
 button { cursor: pointer; border-radius: 6px; border: 1px solid var(--border); background: var(--code-bg); color: var(--fg); }
 .primary { width: 100%; padding: 8px; border: 0; background: var(--accent); color: #fff; font-weight: 600; }
-.primary:disabled { opacity: 0.5; cursor: default; }
+.secondary { width: 100%; padding: 7px; }
+:is(.primary, .secondary):disabled { opacity: 0.5; cursor: default; }
 #go { margin-top: 0.75rem; }
+#bulk-section { margin-top: 0.5rem; }
+#export[hidden] + #bulk-section { margin-top: 0.75rem; }
+#bulk-section .note { margin-top: 6px; }
 .back { margin: 14px 0 8px; }
 
 /* MARK: Output */
@@ -116,3 +120,16 @@ pre {
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/* MARK: Bulk export page */
+#bulk-page > p:first-child { margin: 0 0 6px; }
+#bulk-start, #bulk-progress-section { margin-top: 12px; }
+#bulk-progress { width: 100%; accent-color: var(--accent); }
+#bulk-progress-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#bulk-stop { margin-top: 0.5rem; }
+#bulk-status { min-height: 1em; margin: 10px 0 0; color: var(--muted); overflow-wrap: anywhere; }
+#bulk-status.error { color: var(--error); }
+#bulk-failures { margin-top: 12px; color: var(--muted); }
+#bulk-failure-list { padding-left: 18px; font-size: 11px; max-height: 160px; overflow-y: auto; }
+#bulk-failure-list a { color: var(--fg); }
+.back:disabled { opacity: 0.5; cursor: default; }

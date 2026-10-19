@@ -1,23 +1,54 @@
 import { conversation, message, textPart } from "../ir.js";
 
 // MARK: Page scrape
-// Serialized by chrome.scripting into the page's MAIN world, so it must not close over
-// anything from this module. Reads app data instead of the DOM because ChatGPT lazily
-// renders long chats and the DOM holds only a window of messages.
-async function scrape() {
-  const loaderData = window.__reactRouterDataRouter?.state?.loaderData ?? {};
-  const shared = Object.values(loaderData).find((v) => v?.serverResponse?.data?.mapping);
-  if (shared) return shared.serverResponse.data;
+// scrape and list are serialized by chrome.scripting into the page's MAIN world, so they must not
+// close over anything from this module, or each other. Failures come back as {pageError}, since
+// some browsers drop an error thrown here (see tab.js). Reads app data instead of the DOM because
+// ChatGPT lazily renders long chats and the DOM holds only a window of messages.
+async function scrape(id) {
+  try {
+    if (!id) {
+      const loaderData = window.__reactRouterDataRouter?.state?.loaderData ?? {};
+      const shared = Object.values(loaderData).find((v) => v?.serverResponse?.data?.mapping);
+      if (shared) return shared.serverResponse.data;
+      id = location.pathname.match(/\/c\/([0-9a-f-]+)/)?.[1];
+    }
+    if (!id) throw new Error("Open a ChatGPT conversation (/c/… or /share/…) first.");
+    const session = await (await fetch("/api/auth/session")).json();
+    if (!session.accessToken) throw new Error("Not logged in to ChatGPT.");
+    const res = await fetch(`/backend-api/conversation/${id}`, {
+      headers: { Authorization: `Bearer ${session.accessToken}` },
+    });
+    if (!res.ok) throw new Error(`ChatGPT API returned ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    return { pageError: err.message ?? String(err) };
+  }
+}
 
-  const id = location.pathname.match(/\/c\/([0-9a-f-]+)/)?.[1];
-  if (!id) throw new Error("Open a ChatGPT conversation (/c/… or /share/…) first.");
-  const session = await (await fetch("/api/auth/session")).json();
-  if (!session.accessToken) throw new Error("Not logged in to ChatGPT.");
-  const res = await fetch(`/backend-api/conversation/${id}`, {
-    headers: { Authorization: `Bearer ${session.accessToken}` },
-  });
-  if (!res.ok) throw new Error(`ChatGPT API returned ${res.status}`);
-  return res.json();
+/**
+ * Pages by the count actually returned, since the server may cap `limit`, and stops when a page adds
+ * nothing new. `total` is ignored: it is only a lower bound that grows as you page.
+ */
+async function list() {
+  try {
+    const session = await (await fetch("/api/auth/session")).json();
+    if (!session.accessToken) throw new Error("Not logged in to ChatGPT.");
+    const headers = { Authorization: `Bearer ${session.accessToken}` };
+    const found = new Map();
+    for (let offset = 0; ; ) {
+      const res = await fetch(`/backend-api/conversations?offset=${offset}&limit=100&order=updated`, { headers });
+      if (!res.ok) throw new Error(`ChatGPT API returned ${res.status}`);
+      const { items = [] } = await res.json();
+      const before = found.size;
+      for (const c of items) found.set(c.id, { id: c.id, title: c.title || "Untitled", url: `${location.origin}/c/${c.id}` });
+      offset += items.length;
+      if (found.size === before) break;
+    }
+    return [...found.values()];
+  } catch (err) {
+    return { pageError: err.message ?? String(err) };
+  }
 }
 
 // MARK: Canonicalize
@@ -85,4 +116,6 @@ export default {
   matches: (url) => /^https:\/\/(chatgpt\.com|chat\.openai\.com)\/(c|share)\//.test(url),
   scrape,
   toIR,
+  onSite: (url) => /^https:\/\/(chatgpt\.com|chat\.openai\.com)\//.test(url),
+  list,
 };

@@ -23,11 +23,22 @@ chat-extract is a Chrome extension that exports the ChatGPT or Claude conversati
 
 The ⚙ page sets the model each CLI resumes with (defaults: `claude-opus-5-5` and `gpt-6-astra`).
 
+### Export every chat at once
+
+Open the popup anywhere on chatgpt.com or claude.ai and click **Export all chats as .zip**. No CLI or project path is needed: a bulk export is an archive, not a set of sessions. The popup lists your chats, exports them a few at a time, and saves one zip. Keep the popup open while it runs: clicking outside it closes the popup and stops the export. **Stop** saves the chats done so far. When the site rate-limits, the export pauses and retries with growing waits; chats that still fail are listed with links, and empty ones are skipped.
+
+The zip unpacks into one folder with two files per chat, named `<last active date> <title> (<id>)`:
+
+- `.md`: the conversation as Markdown, to read
+- `.jsonl`: the full conversation in chat-extract's IR (see below), which keeps everything a CLI backend needs
+
+Archived ChatGPT chats aren't included.
+
 **What's exported:** every visible message on the branch you're viewing, including ChatGPT voice-mode transcripts. Abandoned edit branches, hidden system messages, tool calls and model "thinking" are left out.
 
 ## Privacy
 
-The extension runs only when you click it, and only on the tab you're on. It converts the conversation inside your browser and saves files to your Downloads folder. It has no servers, analytics, or tracking. Details: [PRIVACY.md](PRIVACY.md).
+The extension runs only when you click it, and only on the tab you're on. It converts conversations inside your browser and saves files to your Downloads folder. It has no servers, analytics, or tracking. Details: [PRIVACY.md](PRIVACY.md).
 
 ## Compatibility
 
@@ -41,11 +52,12 @@ frontend (per site) ──► IR (JSONL) ──► backend (per CLI) ──► d
 
 | Layer | Files | Contract |
 |---|---|---|
-| Frontends | `src/frontends/{chatgpt,claude}.js` | `{ id, label, matches(url), scrape(), toIR(raw, url) }`. `scrape` is injected into the page (MAIN world) and must be self-contained; `toIR` is pure. |
+| Frontends | `src/frontends/{chatgpt,claude}.js` | `{ id, label, matches(url), scrape(id?), toIR(raw, url), onSite(url), list() }`. `scrape` and `list` are injected into the page (MAIN world) and must be self-contained; `toIR` is pure. `onSite`/`list` are optional and enable bulk export. |
 | IR | `src/ir.js` | Conversation header + messages with typed `parts`. Backends ignore part types they don't know. |
 | Backends | `src/backends/{claude-code,codex}.js` | `{ id, label, needsProjectPath, options, render(ir, opts), install(file) }` |
 | Pipeline | `src/pipeline.js` | Renders the selected backends and builds the single install command. It has no `chrome.*` calls, so it runs in node tests. |
-| Popup | `popup/` | Export → Result pages plus Settings (fields generated from backend `options`). |
+| Bulk export | `src/bulk.js`, `src/archive.js`, `src/zip.js` | Fetches a few chats at a time and writes each in every archive format (`{ ext, render(ir) }`) into a dependency-free deflate zip. Also free of `chrome.*`. |
+| Popup | `popup/` | Export → Result and Export → Bulk export pages plus Settings (fields generated from backend `options`). |
 
 To add a site or a CLI, write one module and add it to `src/frontends/index.js` or `src/backends/index.js`.
 

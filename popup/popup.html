@@ -19,6 +19,7 @@
           <p id="unsupported-text"></p>
         </section>
 
+        <!-- Hidden off conversation pages, where only the bulk export applies. -->
         <form id="export" hidden>
           <div class="field">
             <span class="field-label">Export to</span>
@@ -41,7 +42,35 @@
           <button type="submit" id="go" class="primary">Export</button>
         </form>
 
+        <section id="bulk-section" hidden>
+          <button type="button" id="bulk">Export all chats as .zip</button>
+          <p class="note">Every chat as Markdown and JSONL files to read or keep. No CLI or project path needed.</p>
+        </section>
+
         <p id="status" role="status"></p>
+      </main>
+
+      <!-- MARK: Bulk export page -->
+      <main class="page" id="bulk-page" inert>
+        <p>Saves every chat in one zip, as a Markdown file to read and a JSONL file with the full conversation.</p>
+        <p class="note">Keep this popup open until the zip is saved: clicking outside it closes it and stops the export.</p>
+
+        <button type="button" id="bulk-start" class="primary" hidden>Export</button>
+
+        <section id="bulk-progress-section" hidden>
+          <progress id="bulk-progress" value="0" max="1"></progress>
+          <p id="bulk-progress-text" class="note"></p>
+          <button type="button" id="bulk-stop" class="secondary">Stop and save what's done</button>
+        </section>
+
+        <p id="bulk-status" role="status"></p>
+
+        <details id="bulk-failures" hidden>
+          <summary></summary>
+          <ul id="bulk-failure-list"></ul>
+        </details>
+
+        <button type="button" id="bulk-back" class="primary back" data-back>← Back</button>
       </main>
 
       <!-- MARK: Result page -->
@@ -69,7 +98,7 @@
       </main>
     </div>
 
-    <template id="resume-tpl">
+    <template id="cmd-tpl">
       <div class="cmd-head">
         <span class="cmd-label"></span>
         <button type="button" data-copy>Copy</button>

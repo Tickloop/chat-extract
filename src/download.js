@@ -17,14 +17,21 @@ export async function download({ path, content }) {
 }
 
 // MARK: Saved path
-// The final path can differ from what we asked for (custom Downloads dir, " (1)" uniquify),
-// and Chrome only fills it in once the target is determined, so poll briefly.
+// The final path can differ from what we asked for (custom Downloads dir, " (1)" uniquify), and
+// Chrome only fills it in once the target is determined. For a zip that waits on Safe Browsing's
+// archive scan, which can take seconds, so wait for the change event rather than poll briefly.
 
-async function savedPath(id, attempts = 20) {
-  for (let i = 0; i < attempts; i++) {
-    const [item] = await chrome.downloads.search({ id });
-    if (item?.filename) return item.filename;
-    await new Promise((r) => setTimeout(r, 100));
-  }
-  return null;
+function savedPath(id, timeoutMs = 15_000) {
+  return new Promise((resolve) => {
+    const done = (path) => {
+      chrome.downloads.onChanged.removeListener(onChanged);
+      clearTimeout(timer);
+      resolve(path);
+    };
+    const onChanged = (delta) => delta.id === id && delta.filename?.current && done(delta.filename.current);
+    const timer = setTimeout(() => done(null), timeoutMs);
+    chrome.downloads.onChanged.addListener(onChanged);
+    // The target may already be set before the listener was attached.
+    chrome.downloads.search({ id }).then(([item]) => item?.filename && done(item.filename));
+  });
 }

@@ -1,32 +1,17 @@
-import { frontends, pickFrontend } from "../src/frontends/index.js";
+import { frontends, pickFrontend, pickSite } from "../src/frontends/index.js";
 import { backends } from "../src/backends/index.js";
 import { renderAll, projectPathProblem, installCommand, resumeCommands } from "../src/pipeline.js";
 import { download } from "../src/download.js";
+import { runInTab } from "../src/tab.js";
 import { createPageStack } from "./pages.js";
+import { renderCommands, wireCopyButtons } from "./commands.js";
+import { OPTIONS, loadSettings, save, optionValues } from "./settings.js";
+import { openBulkExport } from "./bulk.js";
 
 // MARK: State
-// Backend options (e.g. default models) are declared by the backends themselves, so the
-// Settings page and stored defaults grow automatically when a backend is added.
 
-const OPTIONS = backends.flatMap((b) => b.options ?? []);
-const DEFAULTS = {
-  selected: backends.map((b) => b.id),
-  projectPath: "",
-  ...Object.fromEntries(OPTIONS.map((o) => [o.key, o.default])),
-};
 const $ = (id) => document.getElementById(id);
-
-async function loadSettings() {
-  return { ...DEFAULTS, ...(await chrome.storage.local.get(Object.keys(DEFAULTS))) };
-}
-
-const save = (patch) => chrome.storage.local.set(patch);
 const selectedIds = () => [...document.querySelectorAll("#backends input:checked")].map((i) => i.value);
-
-/** Blank settings fall back to the backend's default instead of exporting an empty model. */
-function optionValues(settings) {
-  return Object.fromEntries(OPTIONS.map((o) => [o.key, settings[o.key]?.trim() || o.default]));
-}
 
 // MARK: Pages
 
@@ -93,17 +78,7 @@ function syncVisibility() {
 function renderResult({ title, messageCount, install, resume }) {
   $("result-summary").textContent = `Exported “${title}” — ${messageCount} messages.`;
   $("install-cmd").textContent = install;
-  $("resume-cmds").replaceChildren(
-    ...resume.map(({ label, command }, i) => {
-      const block = $("resume-tpl").content.cloneNode(true);
-      const pre = block.querySelector("pre");
-      pre.id = `resume-cmd-${i}`;
-      pre.textContent = command;
-      block.querySelector(".cmd-label").textContent = label;
-      block.querySelector("[data-copy]").dataset.copy = pre.id;
-      return block;
-    }),
-  );
+  renderCommands($("resume-cmds"), resume);
 }
 
 // MARK: Last export
@@ -122,18 +97,6 @@ async function restoreLastExport() {
 
 // MARK: Export
 
-async function scrapeTab(tab, frontend) {
-  const [{ result, error } = {}] = await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    world: "MAIN",
-    func: frontend.scrape,
-  });
-  // Depending on the Chrome version a throw in the page either rejects or comes back as `error`.
-  if (error) throw new Error(error.message ?? String(error));
-  if (!result) throw new Error("Could not read the conversation from this page.");
-  return result;
-}
-
 async function onExport(tab, frontend) {
   const ids = selectedIds();
   const opts = { projectPath: $("projectPath").value.trim(), ...optionValues(await loadSettings()) };
@@ -143,7 +106,7 @@ async function onExport(tab, frontend) {
   $("go").disabled = true;
   setStatus("Reading conversation…");
   try {
-    const ir = frontend.toIR(await scrapeTab(tab, frontend), tab.url);
+    const ir = frontend.toIR(await runInTab(tab.id, frontend.scrape), tab.url);
     const rendered = renderAll(ir, ids, opts);
     const files = await Promise.all(rendered.map(async (f) => ({ ...f, savedPath: await download(f) })));
     const result = {
@@ -163,20 +126,14 @@ async function onExport(tab, frontend) {
   }
 }
 
-// MARK: Init
+// MARK: Bulk export
 
-// Delegated because the resume blocks are rendered after init.
-function wireButtons() {
-  document.addEventListener("click", async (e) => {
-    const btn = e.target.closest("button");
-    if (btn?.matches("[data-back]")) pages.pop();
-    if (btn?.dataset.copy) {
-      await navigator.clipboard.writeText($(btn.dataset.copy).textContent);
-      btn.textContent = "Copied";
-      setTimeout(() => (btn.textContent = "Copy"), 1200);
-    }
-  });
+function onBulkExport(tab, site) {
+  pages.push("bulk-page");
+  openBulkExport(tab.id, site);
 }
+
+// MARK: Init
 
 async function init() {
   const settings = await loadSettings();
@@ -185,17 +142,27 @@ async function init() {
   renderSettings(settings);
   pages = createPageStack($("viewport"), "export-page", { onChange: syncSettingsButton });
   $("toggle-settings").addEventListener("click", toggleSettings);
-  wireButtons();
+  wireCopyButtons();
+  document.querySelectorAll("[data-back]").forEach((btn) => btn.addEventListener("click", () => pages.pop()));
   await restoreLastExport();
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const frontend = pickFrontend(tab?.url);
-  if (!frontend) {
+  const site = pickSite(tab?.url);
+  if (!frontend && !site) {
     $("unsupported-text").textContent = `Open a ${frontends.map((f) => f.label).join(" or ")} conversation to export it.`;
     $("unsupported").hidden = false;
     return;
   }
-  $("source").textContent = frontend.label;
+  $("source").textContent = (frontend ?? site).label;
+
+  if (site) {
+    // Bulk is the page's main action when there is no single conversation to export.
+    $("bulk").className = frontend ? "secondary" : "primary";
+    $("bulk").addEventListener("click", () => onBulkExport(tab, site));
+    $("bulk-section").hidden = false;
+  }
+  if (!frontend) return;
 
   renderBackends(settings.selected);
   $("projectPath").value = settings.projectPath;
